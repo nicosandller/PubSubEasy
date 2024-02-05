@@ -10,6 +10,11 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
+
+/*
+  PubSubEasy class facilitates publishing messages to Google Cloud Pub/Sub topics
+  with optional message attributes and secure connection handling.
+*/
 class PubSubEasy {
   public:
     PubSubEasy(
@@ -19,18 +24,18 @@ class PubSubEasy {
       const char* key_path,
       const char* test_root_ca = nullptr
     );
-    
+    // Represents a key-value pair attribute to include with a published message.
     struct Attribute {
         String key;
         String value;
     };
-    void init();
+    void begin();
     void publish(const String& jsonMessage, const Attribute attributes[], unsigned int numAttributes);
 
   private:
-    WiFiClientSecure client;
-    HTTPClient http;
-    String access_token;
+    WiFiClientSecure client;  // Secure client for HTTPS communication.
+    HTTPClient http;           // HTTP client for sending requests.
+    String access_token;       // Cached access token for authentication.
     String base64UrlEncode(const uint8_t *input, int length);
     String readGcpServiceAccountKey();
     String generate_jwt(const String& key_file_content);

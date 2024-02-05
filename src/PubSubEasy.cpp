@@ -1,5 +1,5 @@
 /*
-  PubSubEasy.h - Library for subscribing and publishing to PubSub.
+  PubSubEasy.cpp - Library for subscribing and publishing to PubSub.
   Created by Nicolas Sandller, February 4, 2024.
   Released into the public domain.
 */
@@ -12,7 +12,9 @@
 #include "mbedtls/error.h" 
 #include <base64.hpp>
 
-// Change this to if not defined
+/*
+  Define debug macros to facilitate debugging output. Adjust DEBUG flag as needed.
+*/
 #if DEBUG == 1
     #define debug(x) Serial.print(x)
     #define debugln(x) Serial.println(x)
@@ -20,7 +22,11 @@
     #define debug(x)
     #define debugln(x)
 #endif
-
+/*
+  Helper function to print mbedtls error messages in a human-readable format.
+  
+  @param errCode The error code returned by mbedtls functions.
+*/
 void debugMbedtlsError(int errCode) {
     char errorBuf[100];
     mbedtls_strerror(errCode, errorBuf, 100);
@@ -28,7 +34,15 @@ void debugMbedtlsError(int errCode) {
     debugln(errorBuf);
 }
 
-// Correct constructor definition in PubSub.cpp to match the declaration in PubSub.h
+/*
+    Constructor for creating a PubSubEasy object.
+    
+    @param projectID The Google Cloud Project ID.
+    @param topicName The Pub/Sub topic name to publish messages to.
+    @param server The server URL for the Pub/Sub service.
+    @param key_path Path to the GCP service account key for authentication.
+    @param test_root_ca Optional: Root CA certificate for secure connection.
+*/
 PubSubEasy::PubSubEasy(const char* projectID, const char* topicName, const char* server, const char* key_path, const char* test_root_ca) {
   this->projectID = projectID;
   this->topicName = topicName;
@@ -38,8 +52,11 @@ PubSubEasy::PubSubEasy(const char* projectID, const char* topicName, const char*
 
   constructFullTopicUrl(); // Construct the full topic URL
 }
-
-void PubSubEasy::init() {
+/*
+    Initializes the PubSubEasy object, setting up time synchronization and HTTP client.
+    Must be called before publishing messages.
+*/
+void PubSubEasy::begin() {
 
   setupTime();
   setupHttpClient();
@@ -59,7 +76,10 @@ void PubSubEasy::init() {
     debugln("Failed to obtain access token");
   }
 }
-
+/*
+    Constructs the full topic URL using the provided project ID and topic name.
+    This URL is used for publishing messages to the specified Pub/Sub topic.
+*/
 void PubSubEasy::constructFullTopicUrl() {
     // Construct standard Pub/Sub topic URL format
     fullTopicUrl = "https://pubsub.googleapis.com/v1/projects/" + projectID + "/topics/" + topicName + ":publish";
@@ -72,7 +92,14 @@ void PubSubEasy::connectToServer() {
   else
     debugln("Connected to server!");
 }
-
+/*
+  Encodes input data into a URL-safe base64 string. This encoding is used for JWT
+  creation and other instances where base64-encoded data needs to be URL-safe.
+  
+  @param input The input data to encode.
+  @param length The length of the input data.
+  @return A URL-safe base64-encoded string.
+*/
 String PubSubEasy::base64UrlEncode(const uint8_t *input, int length) {
   size_t output_length;
   // Determine the length of the encoded string
@@ -91,7 +118,10 @@ String PubSubEasy::base64UrlEncode(const uint8_t *input, int length) {
 
   return encodedString;
 }
-
+/*
+    Sets up the time synchronization with NTP servers. This is required for generating
+    accurate JWTs for authentication with Google Cloud Pub/Sub.
+*/
 void PubSubEasy::setupTime() {
   // Implement NTP time synchronization (ESP = server time)
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
@@ -108,7 +138,11 @@ void PubSubEasy::setupTime() {
   debugln("Current time: ");
   debug(asctime(&timeinfo));
 }
-
+/*
+    Configures the HTTP client for secure communication with Google Cloud Pub/Sub.
+    Sets up the root CA certificate if provided, or configures the client for insecure
+    connection if the root CA is not set.
+*/
 void PubSubEasy::setupHttpClient() {
   if (test_root_ca) {
     debugln("Setting HTTP client in SECURE mode.");
@@ -121,7 +155,12 @@ void PubSubEasy::setupHttpClient() {
   http.begin(client, tokenURL);
   http.addHeader("Content-Type", contentType); // Assuming contentType is "application/x-www-form-urlencoded"
 }
-
+/*
+  Reads the GCP service account key from the filesystem and returns it as a string.
+  This key is necessary for authentication with Google Cloud Pub/Sub.
+  
+  @return The content of the GCP service account key file as a String.
+*/
 String PubSubEasy::readGcpServiceAccountKey() {
     // Reading of GCP service account key
     // Mounts SPIFFS and reads the JSON key file
@@ -151,7 +190,13 @@ String PubSubEasy::readGcpServiceAccountKey() {
     debugln("GCP service account key file read successfully.");
     return key_file_content;
 }
-
+/*
+  Generates a JWT for authenticating with Google Cloud Pub/Sub using the provided
+  service account key.
+  
+  @param key_file_content The content of the GCP service account key file.
+  @return A JWT token as a String.
+*/
 String PubSubEasy::generate_jwt(const String& key_file_content) {
   // generate JWT
   debugln("Generating JWT...");
@@ -243,7 +288,12 @@ String PubSubEasy::generate_jwt(const String& key_file_content) {
 
   return jwt;
 }
-
+/*
+  Obtains an access token from Google OAuth 2.0 server using the generated JWT.
+  
+  @param jwt The JWT token generated for authentication.
+  @return An access token as a String.
+*/
 String PubSubEasy::getAccessToken(const String& jwt) {
 
   StaticJsonDocument<1536> jsonDoc;
@@ -278,7 +328,13 @@ String PubSubEasy::getAccessToken(const String& jwt) {
   }
   http.end(); // End the HTTP connection
 }
-
+/*
+    Publishes a JSON formatted message to the configured Pub/Sub topic with optional attributes.
+    
+    @param jsonMessage The JSON formatted message to publish.
+    @param attributes Array of attributes to include with the message.
+    @param numAttributes Number of attributes in the array.
+*/
 void PubSubEasy::publish(const String& message, const Attribute attributes[], unsigned int numAttributes) {
     // Sending of push request
     debugln(F("Publishing to pubsub..."));
