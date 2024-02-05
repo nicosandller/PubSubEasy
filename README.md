@@ -26,7 +26,13 @@ The `PubSubEasy` library provides a simplified way to publish messages to Google
     - Choose the downloaded ZIP file and click "Open" to install.
 
 3. **Using PlatformIO**:
-    - Add the library to your `platformio.ini` dependencies or copy the library files to your project's `lib` directory.
+    - Add the library to your `platformio.ini` dependencies.
+    - or copy the library files to your project's `lib` directory.
+    - or make a `symlink` to the project's `lib` directory:
+```
+ln -s /path/to/YourLibraryName /path/to/projects/lib/YourLibraryName
+```
+
 
 ## Quick Start
 
