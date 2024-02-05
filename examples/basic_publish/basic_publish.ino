@@ -1,7 +1,13 @@
+/*
+  basic_publish.ino - Example script for publishing to PubSub.
+  Created by Nicolas Sandller, February 4, 2024.
+  Released into the public domain.
+*/
+
 #include <Arduino.h>
 #include "PubSubEasy.h"
 
-#define DEBUG == 1 // For debugging logs to print to Serial
+#define DEBUG 1 // For debugging logs to print to Serial
 
 const char* ssid = "[YOUR SSID]";
 const char* password = "[YOUR WIFI PASSWORD]";
@@ -33,7 +39,8 @@ void connectToWiFi() {
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nFailed to connect to WiFi. Please check your settings.");
+    Serial.println("\nFailed to connect to WiFi. Please check your settings. Halting execution...");
+    while(true) { delay(1000); } // Halt execution
   }
 }
 
@@ -44,7 +51,7 @@ void setup() {
 
   connectToWiFi();
 
-  topic.init();
+  topic.begin();
   // Now ready to send messages
   PubSubEasy::Attribute attributes[] = {
       {"device_id", "device_1"},
