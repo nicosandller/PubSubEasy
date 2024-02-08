@@ -5,9 +5,8 @@
 */
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "PubSubEasy.h"
-
-#define DEBUG 1 // For debugging logs to print to Serial
 
 const char* ssid = "[YOUR SSID]";
 const char* password = "[YOUR WIFI PASSWORD]";
@@ -19,7 +18,7 @@ const char* api_url = "https://pubsub.googleapis.com";
 const char* service_account_key_path = "/service_account_keys.json";
 
 // const char* caCert = "..."; // Your CA certificate here but pass nullptr for insecure connection (test)
-PubSubEasy pubSub(project_name, topic_name, api_url , service_account_key_path, nullptr);
+PubSubEasy topic(project_name, topic_name, api_url , service_account_key_path, nullptr);
 
 void connectToWiFi() {
   // Connets to WIFI

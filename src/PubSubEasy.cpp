@@ -3,7 +3,6 @@
   Created by Nicolas Sandller, February 4, 2024.
   Released into the public domain.
 */
-#include "tools.h"
 #include "PubSubEasy.h"
 #include <ArduinoJson.h>
 #include <SPIFFS.h>

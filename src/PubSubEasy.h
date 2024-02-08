@@ -9,7 +9,7 @@
 
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
-
+#include "tools.h"
 
 /*
   PubSubEasy class facilitates publishing messages to Google Cloud Pub/Sub topics
