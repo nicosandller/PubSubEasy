@@ -3,7 +3,7 @@
   Created by Nicolas Sandller, February 4, 2024.
   Released into the public domain.
 */
-
+#include "tools.h"
 #include "PubSubEasy.h"
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
@@ -12,16 +12,7 @@
 #include "mbedtls/error.h" 
 #include <base64.hpp>
 
-/*
-  Define debug macros to facilitate debugging output. Adjust DEBUG flag as needed.
-*/
-#if DEBUG == 1
-    #define debug(x) Serial.print(x)
-    #define debugln(x) Serial.println(x)
-#else
-    #define debug(x)
-    #define debugln(x)
-#endif
+
 /*
   Helper function to print mbedtls error messages in a human-readable format.
   
@@ -56,14 +47,15 @@ PubSubEasy::PubSubEasy(const char* projectID, const char* topicName, const char*
     Initializes the PubSubEasy object, setting up time synchronization and HTTP client.
     Must be called before publishing messages.
 */
-void PubSubEasy::begin() {
+bool PubSubEasy::begin() {
 
   setupTime();
   setupHttpClient();
 
   String key_file_content = readGcpServiceAccountKey();
-  if (key_file_content.length() > 0) {
-    debugln("Key file content loaded successfully.");
+  if (key_file_content.length() == 0) {
+    debugln("Key file content did not load successfully.");
+    return false;
   }
 
   String jwt = generate_jwt(key_file_content);
@@ -72,8 +64,10 @@ void PubSubEasy::begin() {
   access_token = getAccessToken(jwt);
   if (access_token.length() > 0) {
     debugln("Access token obtained: " + access_token);
+    return true;
   } else {
     debugln("Failed to obtain access token");
+    return false;
   }
 }
 /*
@@ -85,13 +79,13 @@ void PubSubEasy::constructFullTopicUrl() {
     fullTopicUrl = "https://pubsub.googleapis.com/v1/projects/" + projectID + "/topics/" + topicName + ":publish";
 }
 
-void PubSubEasy::connectToServer() {
-  debugln("\nStarting connection to server...");
-  if (!client.connect(server.c_str(), 443))
-    debugln("Connection failed!");
-  else
-    debugln("Connected to server!");
-}
+// void PubSubEasy::connectToServer() {
+//   debugln("\nStarting connection to server...");
+//   if (!client.connect(server.c_str(), 443))
+//     debugln("Connection failed!");
+//   else
+//     debugln("Connected to server!");
+// }
 /*
   Encodes input data into a URL-safe base64 string. This encoding is used for JWT
   creation and other instances where base64-encoded data needs to be URL-safe.
@@ -306,7 +300,7 @@ String PubSubEasy::getAccessToken(const String& jwt) {
       debugln("Failed to obtain access token, HTTP response code: " + String(httpResponseCode));
       debugln("Response: " + http.getString()); // Print the server's response
       http.end(); // End the HTTP connection
-      while(true) { delay(1000); } // Halt execution
+      return "";
   }
 
   debugln("Token request successful, HTTP response code: " + String(httpResponseCode));
@@ -315,7 +309,7 @@ String PubSubEasy::getAccessToken(const String& jwt) {
   if (error) {
       debugln("Deserialization of the token response failed: " + String(error.c_str()));
       http.end(); // End the HTTP connection
-      while(true) { delay(1000); } // Halt execution
+      return "";
   }
 
   String accessToken = jsonDoc["access_token"].as<String>();
@@ -324,7 +318,7 @@ String PubSubEasy::getAccessToken(const String& jwt) {
       return accessToken;
   } else {
       debugln("Access token not found in the response.");
-      while(true) { delay(1000); } // Halt execution
+      return "";
   }
   http.end(); // End the HTTP connection
 }

@@ -29,7 +29,7 @@ class PubSubEasy {
         String key;
         String value;
     };
-    void begin();
+    bool begin();
     void publish(const String& jsonMessage, const Attribute attributes[], unsigned int numAttributes);
 
   private:
