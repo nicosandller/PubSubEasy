@@ -16,7 +16,7 @@ const char* project_name = "[project-1234]";
 const char* topic_name = "[project-1234]";
 const char* api_url = "https://pubsub.googleapis.com";
 // Default should be /gcp_iot.json but you have to put the file under data/gcp_iot.json
-const char* service_account_key_path = "/gcp_iot.json";
+const char* service_account_key_path = "/service_account_keys.json";
 
 // const char* caCert = "..."; // Your CA certificate here but pass nullptr for insecure connection (test)
 PubSubEasy pubSub(project_name, topic_name, api_url , service_account_key_path, nullptr);
@@ -51,16 +51,26 @@ void setup() {
 
   connectToWiFi();
 
-  topic.begin();
+  if (!topic.begin()) {
+    debugln("Could not initialize pubSub connection.");
+  }
+
   // Now ready to send messages
   PubSubEasy::Attribute attributes[] = {
       {"device_id", "device_1"},
       {"location", "greenhouse"}
   };
 
-  String jsonMessage = "{\"temperature\": 22.5, \"humidity\": 45.2}";
+  StaticJsonDocument<512> doc;
+  // Add sensor data dynamically
+  doc["temperature"] = 37.5;
+  doc["humidity"] =  85.2;
 
-  topic.publish(jsonMessage, attributes, 2);
+  // Serialize JSON object to String
+  String message;
+  serializeJson(doc, message);
+
+  topic.publish(message, attributes, 2);
 
 }
 
