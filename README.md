@@ -64,12 +64,17 @@ void setup() {
   pubSub.init();
   
   // Publish a test message
-  String jsonMessage = "{\"temperature\": 22.5, \"humidity\": 45.2}";
+  StaticJsonDocument<512> doc;
+  // Add sensor data dynamically
+  doc["temperature"] = 37.5; doc["humidity"] =  85.2;
+  // Serialize JSON object to String
+  String message; serializeJson(doc, message);
+  // Attributes
   PubSubEasy::Attribute attributes[] = {
       {"sensorId", "sensor_001"},
       {"location", "greenhouse"}
   };
-  pubSub.publish(jsonMessage, attributes, 2);
+  pubSub.publish(message, attributes, 2);
 }
 
 void loop() {
