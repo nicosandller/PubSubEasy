@@ -31,12 +31,13 @@ class PubSubEasy {
     };
     bool begin();
     void publish(const String& jsonMessage, const Attribute attributes[], unsigned int numAttributes);
+    // Static method to encode in base 64
+    static String base64UrlEncode(const uint8_t *input, int length);
 
   private:
     WiFiClientSecure client;  // Secure client for HTTPS communication.
     HTTPClient http;           // HTTP client for sending requests.
     String access_token;       // Cached access token for authentication.
-    String base64UrlEncode(const uint8_t *input, int length);
     String readGcpServiceAccountKey();
     String generate_jwt(const String& key_file_content);
     String getAccessToken(const String& jwt);
